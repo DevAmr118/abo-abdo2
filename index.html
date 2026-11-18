@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>مطعم أبو عبده | كريب وبيتزا</title>
+<style>
+body {
+  font-family: Tahoma, Arial, sans-serif;
+  background: #f4f4f5;
+  margin: 0;
+  padding-bottom: 80px;
+}
+header {
+  background: #d9381e;
+  color: #fff;
+  text-align: center;
+  padding: 18px 10px;
+}
+.tabs {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px;
+  background: #fff;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.08);
+}
+.tab {
+  padding: 6px 14px;
+  border: 2px solid #d9381e;
+  background: #fff;
+  color: #d9381e;
+  border-radius: 20px;
+  font-weight: bold;
+  cursor: pointer;
+}
+.tab.active {
+  background: #d9381e;
+  color: #fff;
+}
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 12px;
+  max-width: 800px;
+  margin: 15px auto;
+  padding: 0 15px;
+}
+.card {
+  background: #fff;
+  padding: 14px;
+  border-radius: 10px;
+  border-right: 4px solid #f59e0b;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.08);
+}
+.add {
+  background: #d9381e;
+  color: #fff;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: bold;
+  float: left;
+}
+.bar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: #1f2937;
+  color: #fff;
+  padding: 12px 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.modal {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.6);
+  justify-content: center;
+  align-items: center;
+  padding: 15px;
+}
+.mcont {
+  background: #fff;
+  width: 100%;
+  max-width: 420px;
+  border-radius: 10px;
+  padding: 15px;
+  max-height: 85vh;
+  overflow-y: auto;
+}
+.fg {
+  margin-top: 8px;
+}
+.fg input, .fg select {
+  width: 100%;
+  padding: 8px;
+  margin-top: 4px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  box-sizing: border-box;
+}
+.wbtn {
+  width: 100%;
+  background: #25D366;
+  color: #fff;
+  border: none;
+  padding: 12px;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: bold;
+  margin-top: 12px;
+  cursor: pointer;
+}
+</style>
+</head>
+<body>
+<header>
+  <h1>🍕 مطعم أبو عبده 🌯</h1>
+  <p>شبراقاص - مركز السنطة | الدفع عند الاستلام</p>
+</header>
+
+<div class="tabs">
+  <button class="tab active" onclick="flt('all', this)">الكل</button>
+  <button class="tab" onclick="flt('crepe', this)">كريبات</button>
+  <button class="tab" onclick="flt('pizza', this)">بيتزا</button>
+</div>
+
+<div class="grid" id="menu"></div>
+
+<div class="bar">
+  <div>الأصناف: <strong id="cnt">0</strong> | الإجمالي: <strong id="tot">0</strong> ج.م</div>
+  <button onclick="openC()" style="background:#f59e0b; border:none; padding:8px 14px; border-radius:6px; font-weight:bold; cursor:pointer;">مراجعة الطلب 🛒</button>
+</div>
+
+<div class="modal" id="mod">
+  <div class="mcont">
+    <h3>طلباتك <button onclick="closeC()" style="float:left; border:none; background:none; font-size:1.2rem; cursor:pointer;">✖</button></h3>
+    <div id="clist"></div>
+    <div class="fg">
+      <label>منطقة التوصيل:</label>
+      <select id="area" onchange="upd()">
+        <option value="0">استلام من المطعم (0 ج)</option>
+        <option value="10">شبراقاص (+10 ج)</option>
+        <option value="20">مدينة السنطة (+20 ج)</option>
+      </select>
+    </div>
+    <p style="margin-top:10px; font-weight:bold; color:#d9381e;">الإجمالي النهائي: <span id="mtot">0</span> ج.م</p>
+    <div class="fg"><input type="text" id="cname" placeholder="الاسم بالكامل"></div>
+    <div class="fg"><input type="tel" id="cphone" placeholder="رقم الموبايل"></div>
+    <div class="fg"><input type="text" id="caddr" placeholder="العنوان بالتفصيل"></div>
+    <button class="wbtn" onclick="sendW()">إرسال الطلب على واتساب ✅</button>
+  </div>
+</div>
+<script>
+var items = [
+  {id: 1, cat: 'crepe', name: 'كريب فراخ بانيه', price: 65},
+  {id: 2, cat: 'crepe', name: 'كريب زنجر سبايسي', price: 70},
+  {id: 3, cat: 'crepe', name: 'كريب شاورما فراخ', price: 70},
+  {id: 4, cat: 'crepe', name: 'كريب ميكس جبن', price: 50},
+  {id: 5, cat: 'pizza', name: 'بيتزا مارجريتا وسط', price: 70},
+  {id: 6, cat: 'pizza', name: 'بيتزا فراخ رانش وسط', price: 95},
+  {id: 7, cat: 'pizza', name: 'بيتزا سوسيس وسط', price: 90},
+  {id: 8, cat: 'pizza', name: 'بيتزا سوبر سوبريم كبير', price: 120}
+];
+
+var cart = {};
+
+function render(f) {
+  var c = document.getElementById('menu');
+  c.innerHTML = '';
+  items.forEach(function(i) {
+    if (f === 'all' || i.cat === f) {
+      c.innerHTML += '<div class="card"><b>' + i.name + '</b><br>' +
+        '<span style="color:#d9381e; font-weight:bold">' + i.price + ' ج.م</span>' +
+        '<button class="add" onclick="add(' + i.id + ')">+ أضف</button></div>';
+    }
+  });
+}
+
+function flt(c, b) {
+  document.querySelectorAll('.tab').forEach(function(t) {
+    t.classList.remove('active');
+  });
+  b.classList.add('active');
+  render(c);
+}
+
+function add(id) {
+  cart[id] = (cart[id] || 0) + 1;
+  upd();
+}
+
+function upd() {
+  var c = 0, s = 0;
+  for (var id in cart) {
+    var it = items.find(function(x) { return x.id == id; });
+    c += cart[id];
+    s += it.price * cart[id];
+  }
+  var fee = c > 0 ? parseInt(document.getElementById('area').value) : 0;
+  document.getElementById('cnt').innerText = c;
+  document.getElementById('tot').innerText = s;
+  document.getElementById('mtot').innerText = s + fee;
+}
+
+function openC() {
+  if (!Object.keys(cart).length) return alert('اختار الأكل الأول');
+  var l = document.getElementById('clist');
+  l.innerHTML = '';
+  for (var id in cart) {
+    var it = items.find(function(x) { return x.id == id; });
+    l.innerHTML += '<p>' + it.name + ' × ' + cart[id] + ' = ' + (it.price * cart[id]) + ' ج.م</p>';
+  }
+  upd();
+  document.getElementById('mod').style.display = 'flex';
+}
+
+function closeC() {
+  document.getElementById('mod').style.display = 'none';
+}
+
+function sendW() {
+  var n = document.getElementById('cname').value;
+  var p = document.getElementById('cphone').value;
+  var a = document.getElementById('caddr').value;
+  if (!n || !p) return alert('اكتب الاسم والموبايل');
+  
+  var txt = '*طلب جديد لمطعم أبو عبده*\n';
+  var s = 0;
+  for (var id in cart) {
+    var it = items.find(function(x) { return x.id == id; });
+    s += it.price * cart[id];
+    txt += '- ' + it.name + ' (' + cart[id] + ')\n';
+  }
+  var fee = parseInt(document.getElementById('area').value);
+  txt += '\nالإجمالي: ' + (s + fee) + ' ج.م\nالاسم: ' + n + '\nالموبايل: ' + p + '\nالعنوان: ' + a;
+  
+  var url = 'https://' + '://whatsapp.com' + encodeURIComponent(txt);
+  window.location.href = url;
+}
+
+render('all');
+</script>
+</body>
+</html>
